@@ -34,9 +34,9 @@ const mapColums = (contacts, file_structure, file) => {
     ))
 }
 
-(async () => {
+const upload = async () => {
+    console.log("Contacts upload process start");
     const files = await getFiles();
-
     let processed = 0;
 
     files.forEach(async file => {
@@ -54,21 +54,29 @@ const mapColums = (contacts, file_structure, file) => {
 
         const contactsToSave = mapColums(contacts, file_structure, file);
 
-        saveContacts(contactsToSave).then(results => {
-            let success = 0
-            results.forEach(result => !result.error ? success++ : 0)
+        const results = await saveContacts(contactsToSave)
 
-            if (success == 0 && contacts.length != 0) {
-                file.status = 'Failed'
-            } else {
-                file.status = 'Finished'
-            }
+        let success = 0
 
-            updateFileStatus(file).then(result => {
-                processed++
-            })
-        }).catch(error => {
-            console.log(error);
-        })
+        results.forEach(result => !result.error ? success++ : 0)
+
+        if (success == 0 && contacts.length != 0) {
+            file.status = 'Failed'
+        } else {
+            file.status = 'Finished'
+        }
+
+        await updateFileStatus(file)
+        processed ++;
+
+        if (processed >= files.length) {
+            console.log("contacts upload process finished");
+        }
     });
-})()
+
+    if (processed >= files.length) {
+        console.log("contacts upload process finished");
+    }
+}
+
+module.exports = upload;

@@ -24,6 +24,7 @@
     "credit-card-type": "^9.1.0",
     "csvtojson": "^2.0.10",
     "dotenv": "^16.0.1",
+    "node-cron": "^3.0.0",
     "pg": "^8.7.3",
     "validator": "^13.7.0"
   }
