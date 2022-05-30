@@ -10,7 +10,7 @@ const DB_CONFIG = {
 
 const ENCRYPTION_PASSWORD = process.env.ENCRYPTION_PASSWORD  || 'FoCKvdLslUuB4y3EZlKate7XGottHski1LmyqJHvUhs';
 
-const FILES_SAVED_PATH = process.env.FILES_SAVED_PATH || './files';
+const FILES_SAVED_PATH = process.env.FILES_SAVED_PATH || './target/files';
 
 const FILES_LIMIT_PER_EXECUTION = process.env.FILES_LIMIT_PER_EXECUTION || 20;
 

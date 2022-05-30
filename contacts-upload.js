@@ -3,19 +3,23 @@ const csv = require('csvtojson');
 const path = require('path');
 const { createContact, getFileStructure, createContactFail } = require('./db/contacts');
 const creditCardType = require('credit-card-type');
+const fs = require('fs');
 
 const { FILES_SAVED_PATH } = require('./config');
 
-const saveContacts = (contacts) => {
-    return new Promise((resolve, reject) => {
-        const operations = [];
-
-        contacts.forEach(contact => {
-            operations.push(createContact(contact));
+const saveContacts = async (contacts) => {
+        const results = await contacts.map(async contact => {
+            const result = await createContact(contact)
+            if (result.error) {
+                await createContactFail(contact, result.validations);
+            }
+            console.log(result);
+            return result;
         })
 
-        Promise.all(operations).then(results => resolve(results)).catch(err => console.log(err))
-    })
+        console.log(results);
+        console.log("results");
+        return results;
 }
 
 const mapColums = (contacts, file_structure, file) => {
@@ -36,46 +40,54 @@ const mapColums = (contacts, file_structure, file) => {
 
 const upload = async () => {
     console.log("Contacts upload process start");
-    const files = await getFiles();
-    let processed = 0;
 
-    files.forEach(async file => {
-        file.status = 'Processing'
-        await updateFileStatus(file);
-
-        const fileName = path.join(FILES_SAVED_PATH, file.saved_name)
-        const contacts = await csv().fromFile(fileName)
-
-        const file_structure = await getFileStructure(file.user_id);
-
-        if (!file_structure) {
-            return console.error('file structure doest exists');
-        }
-
-        const contactsToSave = mapColums(contacts, file_structure, file);
-
-        const results = await saveContacts(contactsToSave)
-
-        let success = 0
-
-        results.forEach(result => !result.error ? success++ : 0)
-
-        if (success == 0 && contacts.length != 0) {
-            file.status = 'Failed'
-        } else {
-            file.status = 'Finished'
-        }
-
-        await updateFileStatus(file)
-        processed ++;
-
+    try {
+        
+        const files = await getFiles();
+        let processed = 0;
+    
+        files.forEach(async file => {
+            file.status = 'Processing'
+            await updateFileStatus(file);
+    
+            const fileName = path.join(FILES_SAVED_PATH, file.saved_name)
+            const contacts = await csv().fromFile(fileName)
+    
+            const file_structure = await getFileStructure(file.user_id);
+    
+            if (!file_structure) {
+                return console.error('file structure doest exists');
+            }
+    
+            const contactsToSave = mapColums(contacts, file_structure, file);
+    
+            const results = await saveContacts(contactsToSave)
+    
+            let success = 0
+    
+            results.forEach(result => !result.error ? success++ : 0)
+            
+            console.log(success);
+            if (success == 0 && contacts.length != 0) {
+                file.status = 'Failed'
+            } else {
+                file.status = 'Finished'
+            }
+    
+            fs.rmSync(fileName);
+            await updateFileStatus(file)
+            processed ++;
+    
+            if (processed >= files.length) {
+                console.log("contacts upload process finished");
+            }
+        });
+    
         if (processed >= files.length) {
             console.log("contacts upload process finished");
         }
-    });
-
-    if (processed >= files.length) {
-        console.log("contacts upload process finished");
+    } catch (error) {
+        console.error(error);
     }
 }
 
