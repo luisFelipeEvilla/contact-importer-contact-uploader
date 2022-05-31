@@ -13,12 +13,9 @@ const saveContacts = async (contacts) => {
             if (result.error) {
                 await createContactFail(contact, result.validations);
             }
-            console.log(result);
             return result;
         })
 
-        console.log(results);
-        console.log("results");
         return results;
 }
 
@@ -40,12 +37,12 @@ const mapColums = (contacts, file_structure, file) => {
 
 const upload = async () => {
     console.log("Contacts upload process start");
-
     try {
         
         const files = await getFiles();
         let processed = 0;
     
+        console.log(`I'm going to process ${files.length} files`);
         files.forEach(async file => {
             file.status = 'Processing'
             await updateFileStatus(file);
@@ -67,7 +64,6 @@ const upload = async () => {
     
             results.forEach(result => !result.error ? success++ : 0)
             
-            console.log(success);
             if (success == 0 && contacts.length != 0) {
                 file.status = 'Failed'
             } else {
