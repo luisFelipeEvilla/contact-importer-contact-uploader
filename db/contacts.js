@@ -88,31 +88,28 @@ const getFileStructure = async (userId) => {
  * @returns {{contact, created: true | false, error: true | null }} returns operations results
  */
 const createContact = async (contact) => {
-    return new Promise((resolve, reject) => {
-        try {
-            validateContact(contact).then((validations) => {
-                const isValid = Object.values(validations).every(validation => validation == true);
+    try {
+        const validations = await validateContact(contact)
 
-                if (isValid) {
-                    console.log(contact);
-                    const query = `INSERT INTO contacts(user_id, file_id,name, birth_date, phone, 
+        const isValid = Object.values(validations).every(validation => validation == true);
+
+        if (isValid) {
+            const query = `INSERT INTO contacts(user_id, file_id,name, birth_date, phone, 
                     address, credit_card, credit_card_network, email) VALUES($1, $2, $3, $4, $5, $6, $7, $8, $9)`
-                    const params = [contact.user_id,contact.file_id, contact.name, contact.birth_date, contact.phone,
-                    contact.address, encrypt(contact.credit_card), contact.credit_card_network, contact.email]
+            const params = [contact.user_id, contact.file_id, contact.name, contact.birth_date, contact.phone,
+            contact.address, encrypt(contact.credit_card), contact.credit_card_network, contact.email]
 
-                    pool.query(query, params).then(result => {
-                        resolve(contact)
-                    });
-
-                } else {
-                    resolve({ error: 'invalid fields', validations })
-                }
-            }).catch(error => resolve({error, validations: null}));
-        } catch (error) {
-            console.error(error);
-            resolve({ error, validations: null })
+            const result = await pool.query(query, params);
+            console.log("created");
+            return result
+        } else {
+            return ({ error: 'invalid fields', validations })
         }
-    })
+    } catch (error) {
+        console.error(error);
+        const result = { error, validations: null }
+        return result
+    }
 }
 
 const createContacts = (contacts, acum) => {
@@ -172,36 +169,34 @@ const validateContact = async (contact) => {
     }
 }
 
-const createContactFail = (contact, fail) => {
-    return new Promise ((resolve, reject) => {
-        const {
-            user_id,
-            file_id,
-            name,
-            email,
-        } = contact
+const createContactFail = async (contact, fail) => {
+    const {
+        user_id,
+        file_id,
+        name,
+        email,
+    } = contact
 
-        const {
-            validName,
-            validDate,
-            validPhone,
-            validAddress,
-            validCreditCard,
-            validEmail
-        } = fail
+    const {
+        validName,
+        validDate,
+        validPhone,
+        validAddress,
+        validCreditCard,
+        validEmail
+    } = fail
 
-        const query = `INSERT INTO contacts_fail(user_id, file_id, name, email, valid_name, valid_birth_date,
+    const query = `INSERT INTO "contacts_fail"(user_id, file_id, name, email, valid_name, valid_birth_date,
             valid_phone, valid_address, valid_credit_card, valid_email) VALUES($1, $2, $3, $4, $5, $6, $7, $8, $9,
             $10)`
-        const params = [user_id, file_id, name, email, validName, validDate,
+    const params = [user_id, file_id, name, email, validName, validDate,
         validPhone, validAddress, validCreditCard, validEmail]
 
-        pool.query(query, params).then(result => {
-            resolve(result)
-        }).catch(error => {
-            reject(error)
-        })
-    })
+    try {
+        const result = await pool.query(query, params)
+    } catch (error) {
+        console.error(error);
+    }
 }
 
 

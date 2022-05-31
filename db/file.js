@@ -1,3 +1,4 @@
+const { FILES_LIMIT_PER_EXECUTION } = require('../config');
 const pool = require('./index');
 
 /**
@@ -29,8 +30,8 @@ const pool = require('./index');
  */
 const getFiles = async (files) => {
     try {
-        const query = `SELECT * FROM files WHERE status = $1`;
-        const params = ['On Hold'];
+        const query = `SELECT * FROM files WHERE status = $1 LIMIT $2`;
+        const params = ['On Hold', FILES_LIMIT_PER_EXECUTION];
     
         const files = await pool.query(query,  params);
     

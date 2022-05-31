@@ -3,19 +3,26 @@ const csv = require('csvtojson');
 const path = require('path');
 const { createContact, getFileStructure, createContactFail } = require('./db/contacts');
 const creditCardType = require('credit-card-type');
+const fs = require('fs');
 
 const { FILES_SAVED_PATH } = require('./config');
 
-const saveContacts = (contacts) => {
-    return new Promise((resolve, reject) => {
-        const operations = [];
+const saveContacts = async (contacts) => {
+        const results = [];    
 
-        contacts.forEach(contact => {
-            operations.push(createContact(contact));
-        })
+        for (i = 0; i < contacts.length; i++) {
+            const contact = contacts[i];
+            
+            const result = await createContact(contact);
+            
+            if (result.error) {
+                await createContactFail(contact, result.validations);
+            }
 
-        Promise.all(operations).then(results => resolve(results)).catch(err => console.log(err))
-    })
+            results.push(result)
+        }
+
+        return results;
 }
 
 const mapColums = (contacts, file_structure, file) => {
@@ -34,41 +41,56 @@ const mapColums = (contacts, file_structure, file) => {
     ))
 }
 
-(async () => {
-    const files = await getFiles();
-
-    let processed = 0;
-
-    files.forEach(async file => {
-        file.status = 'Processing'
-        await updateFileStatus(file);
-
-        const fileName = path.join(FILES_SAVED_PATH, file.saved_name)
-        const contacts = await csv().fromFile(fileName)
-
-        const file_structure = await getFileStructure(file.user_id);
-
-        if (!file_structure) {
-            return console.error('file structure doest exists');
-        }
-
-        const contactsToSave = mapColums(contacts, file_structure, file);
-
-        saveContacts(contactsToSave).then(results => {
+const upload = async () => {
+    console.log("Contacts upload process start");
+    try {
+        
+        const files = await getFiles();
+        let processed = 0;
+    
+        console.log(`I'm going to process ${files.length} files`);
+        files.forEach(async file => {
+            file.status = 'Processing'
+            await updateFileStatus(file);
+    
+            const fileName = path.join(FILES_SAVED_PATH, file.saved_name)
+            const contacts = await csv().fromFile(fileName)
+    
+            const file_structure = await getFileStructure(file.user_id);
+    
+            if (!file_structure) {
+                return console.error('file structure doest exists');
+            }
+    
+            const contactsToSave = mapColums(contacts, file_structure, file);
+    
+            const results = await saveContacts(contactsToSave)
+    
             let success = 0
+            console.log(results);
             results.forEach(result => !result.error ? success++ : 0)
-
+            
             if (success == 0 && contacts.length != 0) {
                 file.status = 'Failed'
             } else {
                 file.status = 'Finished'
             }
+    
+            fs.rmSync(fileName);
+            await updateFileStatus(file)
+            processed ++;
+    
+            if (processed >= files.length) {
+                console.log("contacts upload process finished");
+            }
+        });
+    
+        if (processed >= files.length) {
+            console.log("contacts upload process finished");
+        }
+    } catch (error) {
+        console.error(error);
+    }
+}
 
-            updateFileStatus(file).then(result => {
-                processed++
-            })
-        }).catch(error => {
-            console.log(error);
-        })
-    });
-})()
+module.exports = upload;
