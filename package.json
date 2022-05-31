@@ -1,0 +1,32 @@
+{
+  "name": "contact-importer-contact-uploader",
+  "version": "1.0.0",
+  "description": "",
+  "main": "index.js",
+  "scripts": {
+    "start": "node index.js",
+    "test": "echo \"Error: no test specified\" && exit 1"
+  },
+  "repository": {
+    "type": "git",
+    "url": "git+https://github.com/luisFelipeEvilla/contact-importer-contact-uploader.git"
+  },
+  "keywords": [],
+  "author": "",
+  "license": "ISC",
+  "bugs": {
+    "url": "https://github.com/luisFelipeEvilla/contact-importer-contact-uploader/issues"
+  },
+  "homepage": "https://github.com/luisFelipeEvilla/contact-importer-contact-uploader#readme",
+  "devDependencies": {
+    "nodemon": "^2.0.16"
+  },
+  "dependencies": {
+    "credit-card-type": "^9.1.0",
+    "csvtojson": "^2.0.10",
+    "dotenv": "^16.0.1",
+    "node-cron": "^3.0.0",
+    "pg": "^8.7.3",
+    "validator": "^13.7.0"
+  }
+}
