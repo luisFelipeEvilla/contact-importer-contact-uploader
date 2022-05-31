@@ -8,13 +8,19 @@ const fs = require('fs');
 const { FILES_SAVED_PATH } = require('./config');
 
 const saveContacts = async (contacts) => {
-        const results = await contacts.map(async contact => {
-            const result = await createContact(contact)
+        const results = [];    
+
+        for (i = 0; i < contacts.length; i++) {
+            const contact = contacts[i];
+            
+            const result = await createContact(contact);
+            
             if (result.error) {
                 await createContactFail(contact, result.validations);
             }
-            return result;
-        })
+
+            results.push(result)
+        }
 
         return results;
 }
@@ -61,7 +67,7 @@ const upload = async () => {
             const results = await saveContacts(contactsToSave)
     
             let success = 0
-    
+            console.log(results);
             results.forEach(result => !result.error ? success++ : 0)
             
             if (success == 0 && contacts.length != 0) {

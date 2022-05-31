@@ -66,7 +66,7 @@ async function setup() {
         process.exit(1);
     })
 
-    pool.query(`CREATE TABLE IF NOT EXISTS contacts_fail (
+    pool.query(`CREATE TABLE IF NOT EXISTS "contacts_fail" (
         contact_id SERIAL PRIMARY KEY,
         user_id SERIAL REFERENCES users(user_id),
         file_id SERIAL REFERENCES files(file_id),
